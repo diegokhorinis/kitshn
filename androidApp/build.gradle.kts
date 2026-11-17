@@ -9,6 +9,7 @@ val kitshnVersionName: String by rootProject.extra
 val kitshnVersionCode: Int by rootProject.extra
 val kitshnAndroidPackageName: String by rootProject.extra
 val date: String by rootProject.extra
+val testDebugKeystorePath: String? = System.getenv("KITSHN_TEST_DEBUG_KEYSTORE_PATH")
 
 dependencies {
     implementation(projects.shared)
@@ -59,6 +60,14 @@ android {
             keyAlias = System.getenv("SIGNING_KEY_ALIAS")
             keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
         }
+        if(testDebugKeystorePath != null) {
+            create("testDebug") {
+                storeFile = file(testDebugKeystorePath)
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
     }
 
     buildTypes {
@@ -67,6 +76,8 @@ android {
             manifestPlaceholders["appIconRound"] = "@mipmap/ic_debug_launcher_round"
 
             applicationIdSuffix = ".debug"
+
+            if(testDebugKeystorePath != null) signingConfig = signingConfigs["testDebug"]
         }
         create("nightly") {
             manifestPlaceholders["appIcon"] = "@mipmap/ic_nightly_launcher"
