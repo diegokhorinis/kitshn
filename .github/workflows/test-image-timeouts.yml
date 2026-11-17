@@ -1,0 +1,44 @@
+name: Test image timeout fix
+
+on:
+  push:
+    branches: [test/image-client-timeout]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - name: Install Android platform
+        run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
+      - name: Test HTTP client lifecycle
+        run: >-
+          ./gradlew :shared:jvmTest
+          --tests 'de.kitshn.api.tandoor.TandoorImageNetworkClientTest'
+          --tests 'de.kitshn.api.tandoor.TandoorClientTest'
+          --console=plain --max-workers=2
+      - name: Build side-by-side Android debug app
+        run: ./gradlew :androidApp:assembleDebug --console=plain --max-workers=2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kitshn-image-timeout-fix
+          path: androidApp/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: timeout-test-results
+          path: shared/build/test-results/jvmTest/*.xml
+          if-no-files-found: ignore
