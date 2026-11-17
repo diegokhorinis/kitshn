@@ -26,6 +26,12 @@ jobs:
           log-accepted-android-sdk-licenses: false
       - name: Install Android platform
         run: sdkmanager "platforms;android-37.0" "build-tools;37.0.0"
+      - name: Install stable test signing key
+        env:
+          DEBUG_KEYSTORE: ${{ secrets.KITSHN_TEST_DEBUG_KEYSTORE }}
+        run: |
+          mkdir -p ~/.android
+          echo "$DEBUG_KEYSTORE" | base64 -d > ~/.android/debug.keystore
       - name: Test HTTP client lifecycle
         run: >-
           ./gradlew :shared:jvmTest
